@@ -1,15 +1,14 @@
 import logging
-import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
 
-# --- ТВОИ ДАННЫЕ (УЖЕ ВСТАВЛЕНЫ) ---
+# --- ТВОИ ДАННЫЕ ---
 TOKEN = "8813591285:AAFviC_uOYTB-4x9HaEDrZRQUtCaOya1RrY"
 ADMIN_ID = 1431254201
 
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 
-# --- ВОПРОСЫ (ТОЛЬКО НАПРАВЛЕНИЯ, БЕЗ РОЛЕЙ) ---
+# --- ВОПРОСЫ ТЕСТА ---
 QUESTIONS = [
     {
         "q": "Что для тебя важнее всего в творческом проекте?",
@@ -65,14 +64,6 @@ QUESTIONS = [
 user_answers = {}
 casting_data = {}
 casting_users = {}
-
-direction_map_ru = {
-    "vocal": "🎵 Вокал",
-    "dance": "💃 Танец",
-    "theatre": "🎭 Театр",
-    "dpi": "🎨 ДПИ",
-    "music": "🎶 Музыка",
-}
 
 # --- /START ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -285,8 +276,10 @@ async def ask_direction(update: Update, context: ContextTypes.DEFAULT_TYPE, user
 
 
 async def ask_experience(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Показывает кнопки с опытом"""
     query = update.callback_query
     await query.answer()
+    
     user_id = query.from_user.id
     direction = query.data.replace("direction_", "")
     casting_data[user_id]["direction"] = direction
@@ -307,8 +300,10 @@ async def ask_experience(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def finish_casting(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Финал кастинга — отправка админу"""
     query = update.callback_query
     await query.answer()
+    
     user_id = query.from_user.id
     experience = query.data.replace("exp_", "")
     casting_data[user_id]["experience"] = experience
@@ -348,6 +343,7 @@ async def finish_casting(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown"
         )
         
+        # Сохраняем пользователя для рассылки
         if user_id not in casting_users:
             casting_users[user_id] = direction_key
         
@@ -359,7 +355,7 @@ async def finish_casting(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.pop("waiting_for", None)
 
 
-# ==================== РАССЫЛКА ПО НАПРАВЛЕНИЯМ ====================
+# ==================== РАССЫЛКА ====================
 
 async def send_casting(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_ID:
